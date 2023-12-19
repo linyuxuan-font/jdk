@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
-public abstract class FileFont extends PhysicalFont {
+public abstract class FileFont extends PhysicalFont implements FontSubstitution {
 
     protected boolean useJavaRasterizer = true;
 
@@ -78,6 +78,8 @@ public abstract class FileFont extends PhysicalFont {
      */
     protected NativeFont[] nativeFonts;
     protected char[] glyphToCharMap;
+
+    protected CompositeFont compFont;
     /*
      * @throws FontFormatException if the font can't be opened
      */
@@ -285,6 +287,17 @@ public abstract class FileFont extends PhysicalFont {
                       }
             });
         }
+    }
+
+    @Override
+    public CompositeFont getCompositeFont2D() {
+        if (compFont == null) {
+            SunFontManager fm = SunFontManager.getInstance();
+            CompositeFont fallbackFont = 
+                    (CompositeFont)fm.getFontFromFontConfiguration(familyName, style);
+            compFont = new CompositeFont(this, fallbackFont);
+        }
+        return compFont;
     }
 
     @SuppressWarnings("removal")
