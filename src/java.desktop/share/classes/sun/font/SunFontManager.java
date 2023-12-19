@@ -1041,6 +1041,13 @@ public abstract class SunFontManager implements FontSupport, FontManagerForSGE {
         return findFont2D("dialog", style, NO_FALLBACK);
     }
 
+    public Font2D getFontFromFontConfiguration(String name, int style) { 
+        // The current implementation of this function is not available
+        // for Windows, MacOSX, and Linux without Fontconfig.
+        // Use the default logical font instead.
+        return getDefaultLogicalFont(style);
+    }
+
     /*
      * return String representation of style prepended with "."
      * This is useful for performance to avoid unnecessary string operations.
@@ -2162,6 +2169,7 @@ public abstract class SunFontManager implements FontSupport, FontManagerForSGE {
         switch (fallback) {
         case PHYSICAL_FALLBACK: return getDefaultPhysicalFont();
         case LOGICAL_FALLBACK: return getDefaultLogicalFont(style);
+        case FONTCONFIGURATION_FALLBACK: return getFontFromFontConfiguration(name, style);
         default: return null;
         }
     }

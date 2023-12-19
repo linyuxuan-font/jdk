@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ public interface FontManager {
     public static final int NO_FALLBACK = 0;
     public static final int PHYSICAL_FALLBACK = 1;
     public static final int LOGICAL_FALLBACK = 2;
+    public static final int FONTCONFIGURATION_FALLBACK = 3;
 
     /**
      * Register a new font. Please, note that {@code null} is not a valid
