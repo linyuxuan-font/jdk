@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -229,6 +229,40 @@ public class FcFontConfiguration extends FontConfiguration {
             }
         }
         return fcFonts[0].allFonts;
+    }
+
+    /**
+     * Gets the information for the specified font from Fontconfig
+     */
+    public CompositeFontDescriptor get2DCompositeFontInfo(String name, int style) {
+        FcFontManager fm = (FcFontManager) fontManager;
+        FontConfigManager fcm = fm.getFontConfigManager();
+        FcCompFont fcCompFont = fcm.getFontConfigMatch(name, style, true);
+        if (fcCompFont == null) {
+            return null;
+        }
+        
+        String faceName = name + "." + styleNames[style];
+        FontConfigFont[] fcFonts = fcCompFont.allFonts;
+
+        int numFonts = fcFonts.length;
+        String[] fileNames = new String[numFonts];
+        String[] faceNames = new String[numFonts];
+
+        int index;
+        for (index = 0; index < fcFonts.length; index++) {
+            faceNames[index] = fcFonts[index].fullName;
+            fileNames[index] = fcFonts[index].fontFile;
+        }
+
+        CompositeFontDescriptor result
+                = new CompositeFontDescriptor(
+                    faceName,
+                    1,
+                    faceNames,
+                    fileNames,
+                    null, null);
+        return result;
     }
 
     @Override

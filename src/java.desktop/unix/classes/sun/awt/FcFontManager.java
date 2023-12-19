@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,12 @@
 
 package sun.awt;
 
+import sun.font.CompositeFont;
+import sun.font.CompositeFontDescriptor;
 import sun.font.FcFontConfiguration;
+import sun.font.Font2D;
 import sun.font.FontConfigManager;
+import sun.font.FontUtilities;
 import sun.font.SunFontManager;
 
 /**
@@ -65,6 +69,41 @@ public class FcFontManager extends SunFontManager {
         } else {
             throw new InternalError("failed to initialize fontconfig");
         }
+    }
+
+    @Override
+    public Font2D getFontFromFontConfiguration(String name, int style) {
+        CompositeFont cf = createCompositeFont(name, style);
+        if (cf == null) {
+            if (FontUtilities.debugFonts()) {
+                FontUtilities.logWarning("can't get font from fontconfiguration.");
+            }
+            return super.getDefaultLogicalFont(style);
+        }
+        return cf;
+    }
+
+    /**
+     * Builds a composite font using the information from fontconfig
+     */
+    protected CompositeFont createCompositeFont(String name, int style) {
+        FcFontConfiguration fcFontConfig = (FcFontConfiguration)createFontConfiguration();
+        CompositeFontDescriptor fontInfo = fcFontConfig.get2DCompositeFontInfo(name, style);
+        if (fontInfo == null) {
+            return null;
+        }
+
+        String[] componentFileNames = fontInfo.getComponentFileNames();
+        String[] componentFaceNames = fontInfo.getComponentFaceNames();
+
+        CompositeFont cf = new CompositeFont(fontInfo.getFaceName(),
+                                             componentFileNames,
+                                             componentFaceNames,
+                                             fontInfo.getCoreComponentCount(),
+                                             fontInfo.getExclusionRanges(),
+                                             fontInfo.getExclusionRangeLimits(), 
+                                             true, this);
+        return cf;
     }
 
     @Override

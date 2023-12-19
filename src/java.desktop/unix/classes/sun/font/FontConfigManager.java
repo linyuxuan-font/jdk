@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,6 +96,13 @@ public class FontConfigManager {
         "monospace:bold:italic",
     };
 
+    private static String[] fontConfigStyles = {
+        "regular:roman",
+        "bold:roman",
+        "regular:italic",
+        "bold:italic"
+    };
+
     /* This array has the array elements created in Java code and is
      * passed down to native to be filled in.
      */
@@ -188,7 +195,8 @@ public class FontConfigManager {
             fontArr[i].jdkName = FontUtilities.mapFcName(fontArr[i].fcFamily);
             fontArr[i].style = i % 4; // depends on array order.
         }
-        getFontConfig(getFCLocaleStr(), fcInfo, fontArr, includeFallbacks);
+        getFontConfigInfo(fcInfo);
+        getFontConfigMatch(getFCLocaleStr(), fontArr, includeFallbacks);
         FontConfigFont anyFont = null;
         /* If don't find anything (eg no libfontconfig), then just return */
         for (int i = 0; i< fontArr.length; i++) {
@@ -432,13 +440,10 @@ public class FontConfigManager {
         return fontConfigFonts;
     }
 
-    /* Return an array of FcCompFont structs describing the primary
-     * font located for each of fontconfig/GTK/Pango's logical font names.
+    /* Return a FontConfigInfo struct describing the version
+     * and cache directory information for fontconfig
      */
-    private static native void getFontConfig(String locale,
-                                             FontConfigInfo fcInfo,
-                                             FcCompFont[] fonts,
-                                             boolean includeFallbacks);
+    private static native void getFontConfigInfo(FontConfigInfo fcInfo);
 
     void populateFontConfig(FcCompFont[] fcInfo) {
         fontConfigFonts = fcInfo;
@@ -452,6 +457,34 @@ public class FontConfigManager {
     FontConfigInfo getFontConfigInfo() {
         initFontConfigFonts(true);
         return fcInfo;
+    }
+
+    /* Return an array of FcCompFont structs describing the primary
+     * font located for each of fontconfig/GTK/Pango's logical font names.
+     */
+    private static native void
+    getFontConfigMatch(String locale, FcCompFont[] fonts, boolean includeFallbacks);
+
+    FcCompFont getFontConfigMatch(String name, int style, boolean includeFallbacks) {
+        if (FontUtilities.isWindows || fontConfigFailed) {
+            return null;
+        }
+
+        FcCompFont[] fontArr = new FcCompFont[1];
+        fontArr[0] = new FcCompFont();
+
+        fontArr[0].fcName = name + ":" + fontConfigStyles[style];
+
+        getFontConfigMatch(getFCLocaleStr(), fontArr, includeFallbacks);
+
+        if (fontArr[0].firstFont == null) {
+            if (FontUtilities.isLogging()) {
+                FontUtilities.logInfo("Fontconfig returned no font for " + fontArr[0].fcName);
+            }
+            fontConfigFailed = true;
+            return null;
+        }
+        return fontArr[0];
     }
 
     private static native int
